@@ -49,7 +49,6 @@
  *                         added footer to display version and copyright fields
  *                         added feature to identify Azure search vs sql search
  */
-/// DEVELOPMENT FORK
 
 	public static String version()      {  return "v1.9.6"  }
 	def getThisCopyright(){"&copy; 2020 Dominick Meglio"}
@@ -102,8 +101,6 @@ preferences {
 
 import groovy.transform.Field
 import java.util.regex.Matcher
-
-///@Field static String repositoryListing = "http://192.168.7.43/repositories.json" // Rhodes. almaLinux
 @Field static String repositoryListing = "https://raw.githubusercontent.com/HubitatCommunity/hubitat-packagerepositories/master/repositories.json"
 @Field static String settingsFile      = "https://raw.githubusercontent.com/HubitatCommunity/hubitat-packagerepositories/master/settings.json"
 @Field static String searchFuzzyApiUrl = "https://hubitatpackagemanager.azurewebsites.net/graphql"
@@ -243,7 +240,6 @@ def prefOptions() {
 			href(name: "prefPkgView", title: "View Apps and Drivers", required: false, page: "prefPkgView", description: "View the apps and drivers that are managed by packages.")
 			href(name: "prefSettings", title: "Package Manager Settings", required: false, page: "prefSettings", params: [force:true], description: "Modify Hubitat Package Manager Settings.")
 		}
-///		section (){app(name: "HPMIn", appName: "Hubitat Package Manager Install", namespace: "dcm.hpm", title: "Hubitat Package Manager Install", multiple: false)}    
 		displayFooter()
 	}
 }
@@ -400,9 +396,6 @@ def prefInstallRepositorySearch() {
 		srchSrcTxt = "Fast"
 		searchApiUrl = searchFastApiUrl
 	} 
-	///srchSrcTxt = "Fast"
-	///searchApiUrl = searchFastApiUrl
-	///app.updateSetting("srchMethod",[value:true, type:"bool"])
 
 	return dynamicPage(name: "prefInstallRepositorySearch", title: "", nextPage: "prefInstallRepositorySearchResults", install: false, uninstall: false) {
 		displayHeader(' Install')
@@ -857,8 +850,7 @@ def performInstallation() {
 	// All files downloaded, execute installs
 	for (bundleToInstall in requiredBundles) {					// required = true
 		def location = getItemDownloadLocation(bundleToInstall.value)
-///		def primary = manifest?.bundles?.find { item -> item.primary == true } ? true : false
-		setBackgroundStatusMessage("Installing ${bundleToInstall.value.name}") from ${location}")
+		setBackgroundStatusMessage("Installing ${bundleToInstall.value.name} from $location")
 		if (!installBundle(location, false)) {
 			state.manifests.remove(pkgInstall)
 			return rollback("Failed to install bundle ${bundleToInstall.value.name} using ${location}. Please notify the package developer.", false)
@@ -1692,12 +1684,8 @@ def performUpdateCheck() {
 				packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (installed: ${state.manifests[pkg.key].version ?: "N/A"} current: ${version})"]
 				logDebug "Updates found for package ${pkg.key}"
 
-                		if (includeBetas && manifest.betaReleaseNotes != null) {
-                			addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "package", null, newVersionResult.forceProduction)
-                		} 
-                		else {
-					addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "package", null, newVersionResult.forceProduction)
-                		}
+				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+				addUpdateDetails(pkg.key, manifest.packageName, notes, "package", null, newVersionResult.forceProduction)
 			}
 			else {
 				def appOrDriverNeedsUpdate = false
@@ -1713,12 +1701,8 @@ def performUpdateCheck() {
 									}
 									appOrDriverNeedsUpdate = true
 
-                              				if (includeBetas && manifest.betaReleaseNotes != null) {
-                              					addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "specificapp", app, newVersionResult.forceProduction)
-                              				} 
-                              				else {
-										addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "specificapp", app, newVersionResult.forceProduction)
-                              				}
+                              				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                              				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificapp", null, newVersionResult.forceProduction)
 								}
 							}
 							else if ((!installedApp || (!installedApp.required && installedApp.heID == null)) && app.required) {
@@ -1727,12 +1711,8 @@ def performUpdateCheck() {
 								}
 								appOrDriverNeedsUpdate = true
 
-                  					if (includeBetas && manifest.betaReleaseNotes != null) {
-                  						addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "reqapp", app, false)
-                  					} 
-                  					else {
-									addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "reqapp", app, false)
-                  					}
+                  					def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                  					addUpdateDetails(pkg.key, manifest.packageName, notes, "reqapp", null, newVersionResult.forceProduction)
 							}
 							else if (!installedApp && !app.required) {
 								if (!appOrDriverNeedsUpdate) { // Only add a package to the list once
@@ -1740,12 +1720,8 @@ def performUpdateCheck() {
 								}
 								appOrDriverNeedsUpdate = true
 
-                        				if (includeBetas && manifest.betaReleaseNotes != null) {
-                        					addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "optapp", app, false)
-                        				} 
-                        				else {
-									addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "optapp", app, false)
-                        				}
+                        				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optapp", null, newVersionResult.forceProduction)
 							}
 						}
 					}
@@ -1765,12 +1741,8 @@ def performUpdateCheck() {
 									}
 									appOrDriverNeedsUpdate = true
 
-                              				if (includeBetas && manifest.betaReleaseNotes != null) {
-                              					addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "specificdriver", driver, newVersionResult.forceProduction)
-                              				} 
-                              				else {
-										addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "specificdriver", driver, newVersionResult.forceProduction)
-                              				}
+                        				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificdriver", null, newVersionResult.forceProduction)
 								}
 							}
 							else if ((!installedDriver || (!installedDriver.required && installedDriver.heID == null)) && driver.required) {
@@ -1779,20 +1751,12 @@ def performUpdateCheck() {
 								}
 								appOrDriverNeedsUpdate = true
 
-                                			if (includeBetas && manifest.betaReleaseNotes != null) {
-                                				addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "reqdriver", driver, false)
-                                			} 
-                                			else {
-									 addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "reqdriver", driver, false)
-                                			}
+                        				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "reqdriver", null, newVersionResult.forceProduction)
 							}
 							else if (!installedDriver && !driver.required) {
-                        				if (includeBetas && manifest.betaReleaseNotes != null) {
-                        					addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "optdriver", driver, false)
-                        				} 
-                        				else {
-									addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "optdriver", driver, false)
-                        				}
+                        				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optdriver", null, newVersionResult.forceProduction)
 								if (!appOrDriverNeedsUpdate) { // Only add a package to the list once
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (new optional app or driver is available)"]
 								}
@@ -1816,12 +1780,8 @@ def performUpdateCheck() {
 										}
 										appOrDriverNeedsUpdate = true
 
-				            				if (includeBetas && manifest.betaReleaseNotes != null) {
-				            					addUpdateDetails(pkg.key, manifest.packageName, manifest.betaReleaseNotes, "bundle", bundle, newVersionResult.forceProduction)
-				            				} 
-				            				else {
-											addUpdateDetails(pkg.key, manifest.packageName, manifest.releaseNotes, "bundle", bundle, newVersionResult.forceProduction)
-				            				}
+                        						def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        						addUpdateDetails(pkg.key, manifest.packageName, notes, "bundle", null, newVersionResult.forceProduction)
 									}
 						} 
 				        }
@@ -2214,9 +2174,6 @@ def performUpdates(runInBackground) {
 			manifestForRollback = manifest
 			if (manifest.betaVersion && includeBetas)
 				manifest.beta = true
-
-///			for (bundleToInstall in manifest.bundles) {
-///				def location = getItemDownloadLocation(bundleToInstall)
 			for (bundle in manifest.bundles) {
 				def location = getItemDownloadLocation(bundle)
 				setBackgroundStatusMessage("Installing ${location}")
@@ -3882,8 +3839,6 @@ def uninstallFile(id, fileName) {
 }
 
 // Bundle Installation Methods
-/// https://fourthhubitat.aclysnet.com/bundle2/uploadZipFromUrl?url=https%3A%2F%2Fgithub.com%2FDanielWinks%2FHubitat-Public%2Fraw%2Fmain%2FBundles%2FSonosAdvancedController.zip&pwd=&private=false
-/// http://127.0.0.1:8080/bundle2/uploadZipFromUrl?url=https%3A%2F%2Fgithub.com%2FDanielWinks%2FHubitat-Public%2Fraw%2Fmain%2FBundles%2FSonosAdvancedController.zip&pwd=&private=false
 def installBundle(bundleLocation, bundlePrimary=false) {
 	if (location.hub.firmwareVersionString >= "2.3.8.108") {
 		try
@@ -3950,8 +3905,7 @@ def uninstallBundle(bundleName) {
     if (location.hub.firmwareVersionString >= "2.3.2.120") {
     	  HEid = getInstalledBundlesList().findAll{it.name == bundleName}.id[0]
     }
-    else
-    {
+    else {
 	  def gIB = []
         def params = [
     	      uri: getBaseUrl(),
@@ -4000,7 +3954,6 @@ def uninstallBundle(bundleName) {
 				timeout: 300,
 				ignoreSSLIssues: true
 			]
-			log.debug "--uninstallBundle: $params" /// --installBundle: [message:null, success:true]
 			httpGet(params) { resp ->
 				result = resp.data.success
 			}
