@@ -1702,7 +1702,7 @@ def performUpdateCheck() {
 									appOrDriverNeedsUpdate = true
 
                               				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                              				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificapp", null, newVersionResult.forceProduction)
+                              				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificapp", app, newVersionResult.forceProduction)
 								}
 							}
 							else if ((!installedApp || (!installedApp.required && installedApp.heID == null)) && app.required) {
@@ -1712,7 +1712,7 @@ def performUpdateCheck() {
 								appOrDriverNeedsUpdate = true
 
                   					def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                  					addUpdateDetails(pkg.key, manifest.packageName, notes, "reqapp", null, newVersionResult.forceProduction)
+                  					addUpdateDetails(pkg.key, manifest.packageName, notes, "reqapp", app, newVersionResult.forceProduction)
 							}
 							else if (!installedApp && !app.required) {
 								if (!appOrDriverNeedsUpdate) { // Only add a package to the list once
@@ -1721,7 +1721,7 @@ def performUpdateCheck() {
 								appOrDriverNeedsUpdate = true
 
                         				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optapp", null, newVersionResult.forceProduction)
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optapp", app, newVersionResult.forceProduction)
 							}
 						}
 					}
@@ -1742,7 +1742,7 @@ def performUpdateCheck() {
 									appOrDriverNeedsUpdate = true
 
                         				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificdriver", null, newVersionResult.forceProduction)
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificdriver", driver, newVersionResult.forceProduction)
 								}
 							}
 							else if ((!installedDriver || (!installedDriver.required && installedDriver.heID == null)) && driver.required) {
@@ -1752,11 +1752,11 @@ def performUpdateCheck() {
 								appOrDriverNeedsUpdate = true
 
                         				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "reqdriver", null, newVersionResult.forceProduction)
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "reqdriver", driver, newVersionResult.forceProduction)
 							}
 							else if (!installedDriver && !driver.required) {
                         				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optdriver", null, newVersionResult.forceProduction)
+                        				addUpdateDetails(pkg.key, manifest.packageName, notes, "optdriver", driver, newVersionResult.forceProduction)
 								if (!appOrDriverNeedsUpdate) { // Only add a package to the list once
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (new optional app or driver is available)"]
 								}
@@ -1781,7 +1781,7 @@ def performUpdateCheck() {
 										appOrDriverNeedsUpdate = true
 
                         						def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-                        						addUpdateDetails(pkg.key, manifest.packageName, notes, "bundle", null, newVersionResult.forceProduction)
+                        						addUpdateDetails(pkg.key, manifest.packageName, notes, "bundle", bundle, newVersionResult.forceProduction)
 									}
 						} 
 				        }
