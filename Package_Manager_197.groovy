@@ -50,7 +50,6 @@
  *                         added footer to display version and copyright fields
  *                         added feature to identify Azure search vs sql search
  */
-/// DEVELOPMENT FORK -- use "^\s*///.*\n" OR "^.*///.*\n" to remove the lines starting with /// OR containing /// -- think about the impact.
 
 	public static String version()      {  return "v1.9.7"  }
 	def getThisCopyright(){"&copy; 2020 Dominick Meglio"}
@@ -103,8 +102,6 @@ preferences {
 
 import groovy.transform.Field
 import java.util.regex.Matcher
-
-///@Field static String repositoryListing = "http://192.168.7.43/repositories.json" // Rhodes. almaLinux
 @Field static String repositoryListing = "https://raw.githubusercontent.com/HubitatCommunity/hubitat-packagerepositories/master/repositories.json"
 @Field static String settingsFile      = "https://raw.githubusercontent.com/HubitatCommunity/hubitat-packagerepositories/master/settings.json"
 @Field static String searchFuzzyApiUrl = "https://hubitatpackagemanager.azurewebsites.net/graphql"
@@ -244,7 +241,6 @@ def prefOptions() {
 			href(name: "prefPkgView", title: "View Apps and Drivers", required: false, page: "prefPkgView", description: "View the apps and drivers that are managed by packages.")
 			href(name: "prefSettings", title: "Package Manager Settings", required: false, page: "prefSettings", params: [force:true], description: "Modify Hubitat Package Manager Settings.")
 		}
-///		section (){app(name: "HPMIn", appName: "Hubitat Package Manager Install", namespace: "dcm.hpm", title: "Hubitat Package Manager Install", multiple: false)}    
 		displayFooter()
 	}
 }
@@ -274,7 +270,7 @@ def prefSettings(params) {
 		def showInstall = app.getInstallationState() == "INCOMPLETE"
 		if (showInstall)
 			state.firstRun = true
-		return dynamicPage(name: "prefSettings", title: "", nextPage: "prefOptions", install: showInstall, uninstall: false, submitOnChange: true) {
+		return dynamicPage(name: "prefSettings", title: "", nextPage: "prefOptions", install: showInstall, uninstall: false) {
 			displayHeader(' Settings')
 
 			section ("<b>Hub Security</b>") {
@@ -296,13 +292,13 @@ def prefSettings(params) {
 					paragraph "Please click Done and restart the app to continue."
 			}
 			if (!state.firstRun) {
-				section ("General") {
+				section ("<b>General</b>") {
 					input "debugOutput", "bool", title: "Enable debug logging", defaultValue: true
 					input "txtEnable", "bool", title: "Enable text logging", defaultValue: true
-					input "includeBetas", "bool", title: "When updating, install pre-release versions. Note: Pre-releases often include more bugs and should be considered beta software", defaultValue: true
+					input "includeBetas", "bool", title: "When updating, install pre-release versions. Note: Pre-releases often include more bugs and should be considered beta software", defaultValue: true, submitOnChange: true
 				}
 				if (includeBetas) {
-					section {
+					section ("<b>Beta Select</b>") {
 						input "pkgBetaOn", "enum", title: "Choose which app/packages to enable Beta/Early Access code", options: pkgsToList.values(), multiple: true, required: false
 					}
 				}
@@ -407,9 +403,6 @@ def prefInstallRepositorySearch() {
 		srchSrcTxt = "Fast"
 		searchApiUrl = searchFastApiUrl
 	} 
-	///srchSrcTxt = "Fast"
-	///searchApiUrl = searchFastApiUrl
-	///app.updateSetting("srchMethod",[value:true, type:"bool"])
 
 	return dynamicPage(name: "prefInstallRepositorySearch", title: "", nextPage: "prefInstallRepositorySearchResults", install: false, uninstall: false) {
 		displayHeader(' Install')
@@ -719,31 +712,11 @@ def prefInstallVerify() {
 	errorTitle = null
 	errorMessage = null
 
-///	def pkgToInstall = "<ul>"
-///
-///	for (pkg in pkgInstall) {
-///		pkgToInstall += "<li>${state.manifests[pkg].packageName}"
-///
-///		def notes = (updateDetails[pkg].betaReleaseNotes) ? updateDetails[pkg].betaReleaseNotes : updateDetails[pkg].releaseNotes
-///		pkgToInstall += "<br>"
-///		pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
-///		pkgToInstall += "</li>"
-///	}
-
 	return dynamicPage(name: "prefInstallVerify", title: "", nextPage: "prefInstall", install: false, uninstall: false) {
 		displayHeader(' Install')
 		section {
 			paragraph "<b>Ready to install</b>"
 			def manifest = getJSONFile(pkgInstall)
-///
-///			def pkgToInstall = "<ul>"
-///			def notes = (manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
-///			pkgToInstall += "<li>${manifest.packageName}"
-///			pkgToInstall += "<br>"
-///			pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
-///			pkgToInstall += "</li>"
-///			pkgToInstall += "</ul>"
-///
 			if (manifest.licenseFile) {
 				def license = downloadFile(manifest.licenseFile)
 				paragraph "By clicking next you accept the below license agreement:"
@@ -751,7 +724,6 @@ def prefInstallVerify() {
 				paragraph "Click next to continue. This make take some time..."
 			}
 			else
-///				paragraph "The following will be installed: ${pkgToInstall}"
 				paragraph "Click the next button to install your selections. This may take some time..."
 
 			def primaryApp = manifest?.apps?.find { item -> item.primary == true }
@@ -884,7 +856,6 @@ def performInstallation() {
 	// All files downloaded, execute installs
 	for (bundleToInstall in requiredBundles) {					// required = true
 		def location = getItemDownloadLocation(bundleToInstall.value)
-///		def primary = manifest?.bundles?.find { item -> item.primary == true } ? true : false
 		setBackgroundStatusMessage("Installing ${bundleToInstall.value.name} from $location")
 		if (!installBundle(location, false)) {
 			state.manifests.remove(pkgInstall)
@@ -1715,12 +1686,9 @@ def performUpdateCheck() {
 			def includeBetas = pkgBetaOn.contains(state.manifests[pkg.key].packageName)
 			def newVersionResult = newVersionAvailable(manifest, state.manifests[pkg.key], includeBetas)
 			if (newVersionResult.newVersion) {
-///				def version = includeBetas && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
 				def version = pkgBetaOn.contains(state.manifests[pkg.key].packageName) && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
 				packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (installed: ${state.manifests[pkg.key].version ?: "N/A"} current: ${version})"]
 				logDebug "Updates found for package ${pkg.key}"
-
-///				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
 				def notes = (pkgBetaOn.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
 				addUpdateDetails(pkg.key, manifest.packageName, notes, "package", null, newVersionResult.forceProduction)
 			}
@@ -1811,7 +1779,6 @@ def performUpdateCheck() {
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new version)"]
 								}
 								appOrDriverNeedsUpdate = true
-///								def notes = (pkgBetaOn.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                         				def notes = (includeBetas && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                         				addUpdateDetails(pkg.key, manifest.packageName, notes, "bundle", bundle, newVersionResult.forceProduction)
 							}
@@ -1930,15 +1897,6 @@ def prefPkgVerifyUpdates() {
 		def notes = (updateDetails[pkg].betaReleaseNotes) ? updateDetails[pkg].betaReleaseNotes : updateDetails[pkg].releaseNotes
 		updatesToInstall += "<br>"
 		updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
-		
-///		if (updateDetails[pkg].betaReleaseNotes != null) {
-///			updatesToInstall += "<br>"
-///			updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>${updateDetails[pkg].betaReleaseNotes}</textarea>"
-///		} 
-///		else if (updateDetails[pkg].releaseNotes != null) {
-///			updatesToInstall += "<br>"
-///			updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>${updateDetails[pkg].releaseNotes}</textarea>"
-///		}
 
 		updatesToInstall += "</li>"
 	}
@@ -3876,8 +3834,6 @@ def uninstallFile(id, fileName) {
 }
 
 // Bundle Installation Methods
-/// https://fourthhubitat.aclysnet.com/bundle2/uploadZipFromUrl?url=https%3A%2F%2Fgithub.com%2FDanielWinks%2FHubitat-Public%2Fraw%2Fmain%2FBundles%2FSonosAdvancedController.zip&pwd=&private=false
-/// http://127.0.0.1:8080/bundle2/uploadZipFromUrl?url=https%3A%2F%2Fgithub.com%2FDanielWinks%2FHubitat-Public%2Fraw%2Fmain%2FBundles%2FSonosAdvancedController.zip&pwd=&private=false
 def installBundle(bundleLocation, bundlePrimary=false) {
 	if (location.hub.firmwareVersionString >= "2.3.8.108") {
 		try
@@ -3993,7 +3949,6 @@ def uninstallBundle(bundleName) {
 				timeout: 300,
 				ignoreSSLIssues: true
 			]
-///			log.debug "--uninstallBundle: $params" /// --installBundle: [message:null, success:true]
 			httpGet(params) { resp ->
 				result = resp.data.success
 			}
