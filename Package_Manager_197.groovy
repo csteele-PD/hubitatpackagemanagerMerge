@@ -297,9 +297,7 @@ def prefSettings(params) {
 					input "debugOutput", "bool", title: "Enable debug logging", defaultValue: true
 					input "txtEnable", "bool", title: "Enable text logging", defaultValue: true
 					input "includeBetas", "bool", title: "When updating, install pre-release versions. Note: Pre-releases often include more bugs and should be considered beta software", defaultValue: true, submitOnChange: true
-				}
-				if (includeBetas) {
-					section ("<b>Beta Select</b>") {
+					if (includeBetas) {
 						input "pkgBetaOn", "enum", title: "Choose which app/packages to enable Beta/Early Access code", options: pkgsToList.values(), multiple: true, required: false
 					}
 				}
