@@ -10,6 +10,7 @@
  *
  *
  *    mavrrick v1.9.7   Add ability to individually select apps/packages to include Beta Channels
+ *    csteele  v1.9.7    display Release Notes for Installs (prefInstallVerify)
  *    mavrrick v1.9.6	Update to allow separate release notes for Stable and Beta Release
  *				   Updated ability to list installed bundle files from View Apps and Driver Page
  *                         Make Bundles upgradeable on their own
@@ -717,6 +718,15 @@ def prefInstallVerify() {
 		section {
 			paragraph "<b>Ready to install</b>"
 			def manifest = getJSONFile(pkgInstall)
+
+			def pkgToInstall = "<ul>"
+			def notes = (manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+			pkgToInstall += "<li>${manifest.packageName}"
+			pkgToInstall += "<br>"
+			pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
+			pkgToInstall += "</li>"
+			pkgToInstall += "</ul>"
+
 			if (manifest.licenseFile) {
 				def license = downloadFile(manifest.licenseFile)
 				paragraph "By clicking next you accept the below license agreement:"
@@ -724,6 +734,7 @@ def prefInstallVerify() {
 				paragraph "Click next to continue. This make take some time..."
 			}
 			else
+				paragraph "The following will be installed: ${pkgToInstall}"
 				paragraph "Click the next button to install your selections. This may take some time..."
 
 			def primaryApp = manifest?.apps?.find { item -> item.primary == true }
