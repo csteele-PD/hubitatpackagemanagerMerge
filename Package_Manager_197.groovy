@@ -1897,6 +1897,15 @@ def prefPkgVerifyUpdates() {
 		def notes = (updateDetails[pkg].betaReleaseNotes) ? updateDetails[pkg].betaReleaseNotes : updateDetails[pkg].releaseNotes
 		updatesToInstall += "<br>"
 		updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
+		
+		if (updateDetails[pkg].betaReleaseNotes != null) {
+			updatesToInstall += "<br>"
+			updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>${updateDetails[pkg].betaReleaseNotes}</textarea>"
+		} 
+		else if (updateDetails[pkg].releaseNotes != null) {
+			updatesToInstall += "<br>"
+			updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>${updateDetails[pkg].releaseNotes}</textarea>"
+		}
 
 		updatesToInstall += "</li>"
 	}
