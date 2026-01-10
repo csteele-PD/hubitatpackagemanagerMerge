@@ -1694,11 +1694,10 @@ def performUpdateCheck() {
 			def betaSelected = pkgBetaOn?.contains(state.manifests[pkg.key].packageName)
 			def newVersionResult = newVersionAvailable(manifest, state.manifests[pkg.key], betaSelected)
 			if (newVersionResult.newVersion) {
-				def version = pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
+				def version = betaSelected && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
 				packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (installed: ${state.manifests[pkg.key].version ?: "N/A"} current: ${version})"]
 				logDebug "Updates found for package ${pkg.key}"
-
-				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+				def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
 				addUpdateDetails(pkg.key, manifest.packageName, notes, "package", null, newVersionResult.forceProduction)
 			}
 			else {
@@ -1714,7 +1713,7 @@ def performUpdateCheck() {
 										packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new version)"]
 									}
 									appOrDriverNeedsUpdate = true
-                              				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                              				def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                               				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificapp", app, newVersionResult.forceProduction)
 								}
 							}
@@ -1723,7 +1722,7 @@ def performUpdateCheck() {
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new requirement)"]
 								}
 								appOrDriverNeedsUpdate = true
-                  					def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                  					def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                   					addUpdateDetails(pkg.key, manifest.packageName, notes, "reqapp", app, newVersionResult.forceProduction)
 							}
 							else if (!installedApp && !app.required) {
@@ -1731,7 +1730,7 @@ def performUpdateCheck() {
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (new optional app or driver is available)"]
 								}
 								appOrDriverNeedsUpdate = true
-                        				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                        				def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                         				addUpdateDetails(pkg.key, manifest.packageName, notes, "optapp", app, newVersionResult.forceProduction)
 							}
 						}
@@ -1782,7 +1781,7 @@ def performUpdateCheck() {
 				        if (bundle.id) { // skip if a bundle is not actually defined
 				            def installedBundle = getBundleById(state.manifests[pkg.key], bundle.id)
 				            if (bundle?.version != null && installedBundle?.version != null) {
-							newVersionResult = newVersionAvailable(bundle, installedBundle)
+							newVersionResult = newVersionAvailable(bundle, installedBundle, betaSelected)
 							if (newVersionResult.newVersion) {
 								if (!appOrDriverNeedsUpdate) {// Only add a package to the list once
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new version)"]
@@ -2175,7 +2174,7 @@ def performUpdates(runInBackground) {
 			initializeRollbackState("update")
 
 			manifestForRollback = manifest
-			if (manifest.betaVersion && includeBetas)
+			if (manifest.betaVersion && pkgBetaOn?.contains(state.manifests[pkg.key].packageName))
 				manifest.beta = true
 
 			for (bundle in manifest.bundles) {
