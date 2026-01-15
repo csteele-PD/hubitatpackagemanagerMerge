@@ -9,7 +9,9 @@
  *
  *
  *
- *    mavrrick v1.9.8   fix issue with "shouldInstallBeta" and "getItemDownloadLocation" methods
+ *    mavrrick v1.9.8   Fix issue with "shouldInstallBeta" and "getItemDownloadLocation" methods
+ *                         Added ability to install items with beta turned on. Update needed values accordingly
+ *                         Updated Release Notes for install to display proper release info based on selection of Beta flag during install
  *    mavrrick v1.9.7   Add ability to individually select apps/packages to include Beta Channels
  *    csteele  v1.9.7    display Release Notes for Installs (prefInstallVerify)
  *    mavrrick v1.9.6	Update to allow separate release notes for Stable and Beta Release
@@ -373,6 +375,7 @@ def prefPkgInstall() {
 	if (state.mainMenu)
 		return prefOptions()
 	logDebug "prefPkgInstall"
+	app.updateSetting("installBeta", false)
 
 	return dynamicPage(name: "prefPkgInstall", title: "", install: true, uninstall: false) {
 		displayHeader(' Install')
@@ -643,11 +646,11 @@ def prefInstallChoices(params) {
 					input "bundlesToInstall", "enum", title: "Select the bundles to install", options: bundles, hideWhenEmpty: true, multiple: true
 				}
 			}
-            section("") {
-                if (manifest.toMapString().contains("betaVersion")) {
-                    input "installBeta", "bool", title: "Install beta package", defaultValue: false
-                }
-            }
+			section {
+				if (manifest.toMapString().contains("betaVersion")) {
+					input "installBeta", "bool", title: "Install beta package", defaultValue: false
+				}
+			}
 		}
 		section {
 			paragraph "<hr>"
@@ -790,23 +793,23 @@ def prefInstall() {
 def performInstallation() {
 	if (!login())
 		return triggerError("Error logging in to hub", "An error occurred logging into the hub. Please verify your Hub Security username and password.", false)
-	def manifest = getJSONFile(pkgInstall)
 
-    if (installBeta){
-        if (!includeBetas) {
-            app.updateSetting("includeBetas", true)
-        }
-        if (!pkgBetaOn) {
-            List tmp = [manifest.packageName]
-            app.updateSetting("pkgBetaOn", tmp as List)
-            
-        } else {
-            curretSetting = app.getSetting("pkgBetaOn")
-            log.warn "curretSetting is set to ${curretSetting}"
-            curretSetting.add(manifest.packageName)
-            app.updateSetting("pkgBetaOn", curretSetting)
-        }
-    }
+	def manifest = getJSONFile(pkgInstall)
+	if (installBeta){
+		if (!includeBetas) {
+			app.updateSetting("includeBetas", true)
+		}
+		if (!pkgBetaOn) {
+			List tmp = [manifest.packageName]
+			app.updateSetting("pkgBetaOn", tmp as List)
+		} 
+		else {
+			curretSetting = app.getSetting("pkgBetaOn")
+			log.warn "curretSetting is set to ${curretSetting}"
+			curretSetting.add(manifest.packageName)
+			app.updateSetting("pkgBetaOn", curretSetting)
+		}
+	}
     
 	if (shouldInstallBeta(manifest)) {
 		manifest = getJSONFile(getItemDownloadLocation(manifest))
@@ -845,6 +848,7 @@ def performInstallation() {
 		}
 		appFiles[location] = fileContents
 	}
+
 	for (appToInstall in appsToInstall) {						// required = false (aka optional)
 		def matchedApp = manifest.apps.find { it.id == appToInstall}
 		if (matchedApp != null) {
@@ -858,6 +862,7 @@ def performInstallation() {
 			appFiles[location] = fileContents
 		}
 	}
+
 	for (requiredDriver in requiredDrivers) {						// required = true
 		def location = getItemDownloadLocation(requiredDriver.value)
 		setBackgroundStatusMessage("Downloading ${requiredDriver.value.name}")
@@ -1717,11 +1722,10 @@ def performUpdateCheck() {
 			def betaSelected = pkgBetaOn?.contains(state.manifests[pkg.key].packageName)
 			def newVersionResult = newVersionAvailable(manifest, state.manifests[pkg.key], betaSelected)
 			if (newVersionResult.newVersion) {
-				def version = pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
+				def version = betaSelected && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
 				packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (installed: ${state.manifests[pkg.key].version ?: "N/A"} current: ${version})"]
 				logDebug "Updates found for package ${pkg.key}"
-
-				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+				def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
 				addUpdateDetails(pkg.key, manifest.packageName, notes, "package", null, newVersionResult.forceProduction)
 			}
 			else {
@@ -1737,7 +1741,7 @@ def performUpdateCheck() {
 										packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new version)"]
 									}
 									appOrDriverNeedsUpdate = true
-	                             				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+									def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                               				addUpdateDetails(pkg.key, manifest.packageName, notes, "specificapp", app, newVersionResult.forceProduction)
 								}
 							}
@@ -1746,7 +1750,7 @@ def performUpdateCheck() {
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new requirement)"]
 								}
 								appOrDriverNeedsUpdate = true
-                  					def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+                  					def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                   					addUpdateDetails(pkg.key, manifest.packageName, notes, "reqapp", app, newVersionResult.forceProduction)
 							}
 							else if (!installedApp && !app.required) {
@@ -1754,7 +1758,7 @@ def performUpdateCheck() {
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (new optional app or driver is available)"]
 								}
 								appOrDriverNeedsUpdate = true
-	                      				def notes = (pkgBetaOn?.contains(state.manifests[pkg.key].packageName) && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
+								def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
                         				addUpdateDetails(pkg.key, manifest.packageName, notes, "optapp", app, newVersionResult.forceProduction)
 							}
 						}
@@ -1805,7 +1809,7 @@ def performUpdateCheck() {
 				        if (bundle.id) { // skip if a bundle is not actually defined
 				            def installedBundle = getBundleById(state.manifests[pkg.key], bundle.id)
 				            if (bundle?.version != null && installedBundle?.version != null) {
-							newVersionResult = newVersionAvailable(bundle, installedBundle)
+							newVersionResult = newVersionAvailable(bundle, installedBundle, betaSelected)
 							if (newVersionResult.newVersion) {
 								if (!appOrDriverNeedsUpdate) {// Only add a package to the list once
 									packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (driver or app has a new version)"]
