@@ -728,7 +728,7 @@ def prefInstallVerify() {
 
 			def pkgToInstall = "<ul>"
 			def notes = (manifest.betaReleaseNotes && installBeta) ? manifest.betaReleaseNotes : manifest.releaseNotes
-       		 if (notes) {
+       		if (notes) {
 					pkgToInstall += "<li>${manifest.packageName}"
 					pkgToInstall += "<br>"
 					pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
@@ -4293,10 +4293,10 @@ def shouldInstallBeta(item) {
 
 def getItemDownloadLocation(item) {
     def betaObjects = betaObjList()
-		if (item.betaLocation != null && betaObjList.contains(item.name))
+		if (item.betaLocation != null && betaObjects.contains(item.name))
 			return item.betaLocation 
 	return item.location
-} 
+}
 
 def betaObjList() { 
     def betaObjects = (pkgBetaOn ?: []).toSet()
