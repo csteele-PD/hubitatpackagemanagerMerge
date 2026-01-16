@@ -1671,7 +1671,12 @@ def performUninstall() {
 				return rollback("Failed to uninstall bundle ${bundle.name}.", false)
 			}
 		}
-
+        
+        app.updateSetting("pkgBetaOn", pkgBetaOn.minus(pkg.packageName))
+        if (pkgBetaOn.isEmpty()) {        
+            app.updateSetting("includeBetas", false)
+        }
+        
 		state.manifests.remove(pkgToUninstall)
 	}
 
@@ -1725,6 +1730,7 @@ def performUpdateCheck() {
 				def version = betaSelected && manifest.betaVersion != null ? manifest.betaVersion : manifest.version
 				packagesWithUpdates << ["${pkg.key}": "${state.manifests[pkg.key].packageName} (installed: ${state.manifests[pkg.key].version ?: "N/A"} current: ${version})"]
 				logDebug "Updates found for package ${pkg.key}"
+
 				def notes = (betaSelected && manifest.betaReleaseNotes) ? manifest.betaReleaseNotes : manifest.releaseNotes
 				addUpdateDetails(pkg.key, manifest.packageName, notes, "package", null, newVersionResult.forceProduction)
 			}
@@ -1764,7 +1770,7 @@ def performUpdateCheck() {
 						}
 					}
 					catch (any) {
-						logInfo "Skipping a bad manifest ${state.manifests[pkg.key].packageName}. Please notify the package developer."
+						logInfo "Skipping a bad app manifest ${state.manifests[pkg.key].packageName}. Please notify the package developer."
 					}
 				}
 				for (driver in manifest.drivers) {
@@ -1801,7 +1807,7 @@ def performUpdateCheck() {
 						}
 					}
 					catch (e) {
-						logInfo "Skipping a bad manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
+						logInfo "Skipping a bad driver manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
 					}
 				}
 				for (bundle in manifest.bundles) {
@@ -1822,13 +1828,13 @@ def performUpdateCheck() {
 				        }
 				    }
 				    catch (e) {
-						logInfo "Skipping a bad manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
+						logInfo "Skipping a bad bundle manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
 				    }
 				}
 			}
 		}
 		catch (e) {
-			logInfo "Skipping a bad manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
+			logInfo "Skipping a bad package manifest ${state.manifests[pkg.key].packageName}. ${e} Please notify the package developer."
 		}
 	}
 	packagesWithUpdates = packagesWithUpdates.sort { it -> it.value }
