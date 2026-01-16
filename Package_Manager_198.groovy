@@ -728,11 +728,13 @@ def prefInstallVerify() {
 
 			def pkgToInstall = "<ul>"
 			def notes = (manifest.betaReleaseNotes && installBeta) ? manifest.betaReleaseNotes : manifest.releaseNotes
-			pkgToInstall += "<li>${manifest.packageName}"
-			pkgToInstall += "<br>"
-			pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
-			pkgToInstall += "</li>"
-			pkgToInstall += "</ul>"
+       		 if (notes) {
+					pkgToInstall += "<li>${manifest.packageName}"
+					pkgToInstall += "<br>"
+					pkgToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
+					pkgToInstall += "</li>"
+					pkgToInstall += "</ul>"
+       		}
 
 			if (manifest.licenseFile) {
 				def license = downloadFile(manifest.licenseFile)
@@ -740,12 +742,12 @@ def prefInstallVerify() {
 				paragraph "<textarea rows=20 class='mdl-textfield' readonly='true'>${license}</textarea>"
 				paragraph "Click next to continue. This make take some time..."
 			}
-			else
+			else {
 				paragraph "The following will be installed: ${pkgToInstall}"
 				paragraph "Click the next button to install your selections. This may take some time..."
+			}
 
 			def primaryApp = manifest?.apps?.find { item -> item.primary == true }
-
 			if (primaryApp)
 				input "launchInstaller", "bool", defaultValue: true, title: "Configure the installed package after installation completes."
 
@@ -1936,10 +1938,11 @@ def prefPkgVerifyUpdates() {
 		updatesToInstall += "<li>${state.manifests[pkg].packageName}"
 
 		def notes = (updateDetails[pkg].betaReleaseNotes) ? updateDetails[pkg].betaReleaseNotes : updateDetails[pkg].releaseNotes
-		updatesToInstall += "<br>"
-		updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"
-		
-		updatesToInstall += "</li>"
+		if (notes) {
+			updatesToInstall += "<br>"
+			updatesToInstall += "<textarea rows=6 class='mdl-textfield' readonly='true'>$notes</textarea>"	
+			updatesToInstall += "</li>"
+		}
 	}
 
 	updatesToInstall += "</ul>"
